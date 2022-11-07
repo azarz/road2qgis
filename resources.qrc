@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/plugins/road2qgis" >
+        <file>icon.png</file>
+        <file>res/reticule.png</file>
+        <file>res/plus.png</file>
+        <file>res/x.png</file>
+    </qresource>
+</RCC>
