@@ -21,6 +21,7 @@
  *                                                                         *
  ***************************************************************************/
 """
+from functools import partial
 import json
 import time
 
@@ -198,25 +199,29 @@ class Road2QGISDialog(QtWidgets.QDialog):
     def _display_intermediate_location_selector(self):
         """
         """
-        if (self._current_intermediates >= 0):
-            index = self._current_intermediates
-            self._intermediate_locationselectors[index].setHidden(False)
-            self.remove_intermediate_buttons[index].setHidden(False)
-            self._current_intermediates += 1
+        for index in range(len(self._intermediate_locationselectors)):
+            if not self._intermediate_locationselectors[index].isVisible():
+                break
+        self._intermediate_locationselectors[index].setHidden(False)
+        self.remove_intermediate_buttons[index].setHidden(False)
+        self._current_intermediates += 1
         if (self._current_intermediates == 9):
             self.add_intermediate_button.setHidden(True)
         self.setFixedSize(self.sizeHint())
 
-    def _hide_intermediate_location_selector(self):
+    def _hide_intermediate_location_selector(self, index):
         """
         """
-        if (self._current_intermediates >= 1):
-            index = self._current_intermediates - 1
-            self._intermediate_locationselectors[index].setHidden(True)
-            self.remove_intermediate_buttons[index].setHidden(True)
-            self._current_intermediates = index
         if (self._current_intermediates == 10):
             self.add_intermediate_button.setHidden(False)
+        self._intermediate_locationselectors[index].setHidden(True)
+        self._intermediate_locationselectors[index].text = ""
+        self._intermediate_locationselectors[index].textbox.setText("")
+        self._intermediate_locationselectors[index].latitude = None
+        self._intermediate_locationselectors[index].longitude = None
+        self.remove_intermediate_buttons[index].setHidden(True)
+        self._current_intermediates -= 1
+
         self.setFixedSize(self.sizeHint())
 
     def _add_location_selectors(self):
@@ -256,7 +261,7 @@ class Road2QGISDialog(QtWidgets.QDialog):
             remove_intermediate_button = QtWidgets.QPushButton()
             remove_intermediate_button.setFixedSize(28, 28)
             remove_intermediate_button.setIcon(icon)
-            remove_intermediate_button.clicked.connect(self._hide_intermediate_location_selector)
+            remove_intermediate_button.clicked.connect(partial(self._hide_intermediate_location_selector, i))
             self.remove_intermediate_buttons.append(remove_intermediate_button)
             self.location_layouts[i].addWidget(remove_intermediate_button)
             remove_intermediate_button.setHidden(True)
