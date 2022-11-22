@@ -73,6 +73,7 @@ class LocationSelector(QtWidgets.QWidget):
     def completion_callback(self, index):
         """
         """
-        self.latitude = self._model.takeRow(index.row())[0].latitude
-        self.longitude = self._model.takeRow(index.row())[0].longitude
+        row = self._model.takeRow(index.row())[0]
+        self.latitude = row.latitude
+        self.longitude = row.longitude
         self.location_selected_signal.emit(1)
