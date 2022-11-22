@@ -29,6 +29,7 @@ from qgis.PyQt import QtCore, QtGui, QtWidgets
 from qgis.core import (
     QgsProject, QgsVectorLayer, QgsRectangle, QgsPoint, QgsPointXY,
     QgsCoordinateReferenceSystem, QgsCoordinateTransform,
+    QgsJsonUtils
 )
 
 from road2qgis.ui.location_selector import LocationSelector
@@ -163,24 +164,40 @@ class Road2QGISDialog(QtWidgets.QDialog):
         if self.step_by_step_check.isChecked():
             portions_features = road2_response.getFeatureCollections()
             for i in range(len(portions_features)):
-                with open("tmp_{}_portion{}_steps.geojson".format(timestamp, i), "w") as file:
-                    json.dump(portions_features[i], file)
+                feature_string = json.dumps(portions_features[i])
+                codec = QtCore.QTextCodec.codecForName("UTF-8")
+                fields = QgsJsonUtils.stringToFields(feature_string, codec)
+                feats = QgsJsonUtils.stringToFeatureList(feature_string, fields, codec)
 
                 layer = QgsVectorLayer(
-                    "tmp_{}_portion{}_steps.geojson".format(timestamp, i),
+                    "LineString",
                     "itineraire_etapes_portion_{}".format(i + 1),
-                    "ogr"
+                    "memory"
                 )
+                provider = layer.dataProvider()
+                provider.addAttributes(fields)
+                layer.updateFields()
+                provider.addFeatures(feats)
+                layer.updateExtents()
+
                 QgsProject.instance().addMapLayer(layer)
                 layer.renderer().symbol().setWidth(1.5)
                 layer.triggerRepaint()
 
 
         if self.global_check.isChecked():
-            with open("tmp_{}.geojson".format(timestamp), "w") as file:
-                json.dump(road2_response.getFeature(), file)
+            feature_string = json.dumps(road2_response.getFeature())
+            codec = QtCore.QTextCodec.codecForName("UTF-8")
+            fields = QgsJsonUtils.stringToFields(feature_string, codec)
+            feats = QgsJsonUtils.stringToFeatureList(feature_string, fields, codec)
 
-            layer = QgsVectorLayer("tmp_{}.geojson".format(timestamp), "itineraire", "ogr")
+            layer = QgsVectorLayer("LineString", "itineraire", "memory")
+            provider = layer.dataProvider()
+            provider.addAttributes(fields)
+            layer.updateFields()
+            provider.addFeatures(feats)
+            layer.updateExtents()
+
             QgsProject.instance().addMapLayer(layer)
             layer.renderer().symbol().setWidth(1.5)
             layer.triggerRepaint()
