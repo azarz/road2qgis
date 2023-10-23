@@ -34,6 +34,7 @@ from qgis.core import (
 
 from road2qgis.ui.location_selector import LocationSelector
 from road2qgis.core.road2_request import Road2Request
+# from road2qgis.core.road2_request_iso import Road2RequestIso
 
 class Road2QGISDialog(QtWidgets.QDialog):
     def __init__(self, iface):
@@ -42,12 +43,34 @@ class Road2QGISDialog(QtWidgets.QDialog):
         QtWidgets.QDialog.__init__(self)
         self.setWindowTitle("Calcul d'itinéraires de la Géoplateforme")
 
-        self.layout = QtWidgets.QVBoxLayout()
-        self.central_layout = QtWidgets.QHBoxLayout()
-        self.layout.addLayout(self.central_layout)
+        self.itiWidget = QtWidgets.QWidget()
+        self.itiLayout = QtWidgets.QVBoxLayout()
+        self.itiWidget.setLayout(self.itiLayout)
 
+        self.isoWidget = QtWidgets.QWidget()
+        self.isoLayout = QtWidgets.QVBoxLayout()
+        self.isoWidget.setLayout(self.isoLayout)
+
+        self.tabWidget = QtWidgets.QTabWidget()
+        self.tabWidget.addTab(self.itiWidget, "Itinéraire")
+        self.tabWidget.addTab(self.isoWidget, "Isochrone/Isodistance")
+        self.layout = QtWidgets.QGridLayout()
+        self.layout.addWidget(self.tabWidget, 0, 0)
+
+        self.createItiTab()
+        self.createIsoTab()
+
+        self.setLayout(self.layout)
+        self.setFixedSize(self.sizeHint())
+
+    def createItiTab(self):
+        """
+        Interface de l'onglet itinéraire
+        """
+        central = QtWidgets.QHBoxLayout()
+        self.itiLayout.addLayout(central)
         self.locations_layout = QtWidgets.QVBoxLayout()
-        self.central_layout.addLayout(self.locations_layout)
+        central.addLayout(self.locations_layout)
         location_label = QtWidgets.QLabel()
         location_label.setText("Points de l'itinéraire")
         self.locations_layout.addWidget(location_label)
@@ -68,69 +91,144 @@ class Road2QGISDialog(QtWidgets.QDialog):
         self.location_layout_end.addWidget(self.add_intermediate_button)
         self.add_intermediate_button.clicked.connect(lambda: self._display_intermediate_location_selector())
 
-        self.parameters_layout = QtWidgets.QGridLayout()
-        self.parameters_layout.setSpacing(5)
+        parameters_layout = QtWidgets.QGridLayout()
+        parameters_layout.setSpacing(5)
 
-        self.central_layout.addItem(QtWidgets.QSpacerItem(20, 20))
-        self.central_layout.addLayout(self.parameters_layout)
+        central.addItem(QtWidgets.QSpacerItem(20, 20))
+        central.addLayout(parameters_layout)
 
         parameter_label = QtWidgets.QLabel()
         parameter_label.setText("Paramètres de l'itinéraire")
         parameter_label.setFixedHeight(30)
-        self.parameters_layout.addWidget(parameter_label, 0, 0)
+        parameters_layout.addWidget(parameter_label, 0, 0)
 
         profil_label = QtWidgets.QLabel()
         profil_label.setText("Profil :")
-        self.parameters_layout.addWidget(profil_label, 1, 0)
+        parameters_layout.addWidget(profil_label, 1, 0)
         self.profile_combo = QtWidgets.QComboBox()
         self.profile_combo.addItems(["car", "pedestrian"])
-        self.parameters_layout.addWidget(self.profile_combo, 1, 1)
+        parameters_layout.addWidget(self.profile_combo, 1, 1)
 
         opti_label = QtWidgets.QLabel()
         opti_label.setText("Optimisation :")
-        self.parameters_layout.addWidget(opti_label, 1, 2)
+        parameters_layout.addWidget(opti_label, 1, 2)
         self.opti_combo = QtWidgets.QComboBox()
         self.opti_combo.addItems(["fastest", "shortest"])
-        self.parameters_layout.addWidget(self.opti_combo, 1, 3)
+        parameters_layout.addWidget(self.opti_combo, 1, 3)
 
         timeunit_label = QtWidgets.QLabel()
         timeunit_label.setText("Unité de temps :")
-        self.parameters_layout.addWidget(timeunit_label, 2, 0)
+        parameters_layout.addWidget(timeunit_label, 2, 0)
         self.timeunit_combo = QtWidgets.QComboBox()
         self.timeunit_combo.addItems(["second", "minute", "hour"])
-        self.parameters_layout.addWidget(self.timeunit_combo, 2, 1)
+        parameters_layout.addWidget(self.timeunit_combo, 2, 1)
 
         distunit_label = QtWidgets.QLabel()
         distunit_label.setText("Unité de distance :")
-        self.parameters_layout.addWidget(distunit_label, 2, 2)
+        parameters_layout.addWidget(distunit_label, 2, 2)
         self.distunit_combo = QtWidgets.QComboBox()
         self.distunit_combo.addItems(["meter", "kilometer"])
-        self.parameters_layout.addWidget(self.distunit_combo, 2, 3)
+        parameters_layout.addWidget(self.distunit_combo, 2, 3)
 
         global_check_label = QtWidgets.QLabel()
         global_check_label.setText("Afficher l'itinéraire global")
-        self.parameters_layout.addWidget(global_check_label, 3, 0)
+        parameters_layout.addWidget(global_check_label, 3, 0)
         self.global_check = QtWidgets.QCheckBox()
         self.global_check.setChecked(True)
         self.global_check.clicked.connect(self._check_send_button_enabled)
-        self.parameters_layout.addWidget(self.global_check, 3, 1)
+        parameters_layout.addWidget(self.global_check, 3, 1)
 
         step_by_step_check_label = QtWidgets.QLabel()
         step_by_step_check_label.setText("Afficher les étapes")
-        self.parameters_layout.addWidget(step_by_step_check_label, 3, 2)
+        parameters_layout.addWidget(step_by_step_check_label, 3, 2)
         self.step_by_step_check = QtWidgets.QCheckBox()
         self.step_by_step_check.clicked.connect(self._check_send_button_enabled)
-        self.parameters_layout.addWidget(self.step_by_step_check, 3, 3)
+        parameters_layout.addWidget(self.step_by_step_check, 3, 3)
 
         self.send_route_button = QtWidgets.QPushButton(self)
         self.send_route_button.setText("Calculer l'itinéraire")
         self.send_route_button.setMaximumWidth(200)
         self.send_route_button.clicked.connect(self.compute_route)
         self.send_route_button.setEnabled(False)
-        self.layout.addWidget(self.send_route_button)
+        self.itiLayout.addWidget(self.send_route_button)
 
-        self.setLayout(self.layout)
-        self.setFixedSize(self.sizeHint())
+    def createIsoTab(self):
+        """
+        Interface de l'onglet isochrone
+        """
+        central = QtWidgets.QHBoxLayout()
+        self.isoLayout.addLayout(central)
+        self.iso_locations_layout = QtWidgets.QGridLayout()
+        self.iso_locations_layout.setSpacing(5)
+        central.addLayout(self.iso_locations_layout)
+
+        isochrone_dist_label = QtWidgets.QLabel()
+        isochrone_dist_label.setText("Isochrone/isodistance")
+        self.iso_locations_layout.addWidget(isochrone_dist_label, 0, 0)
+        self.isochrone_dist_combo = QtWidgets.QComboBox()
+        self.isochrone_dist_combo.addItems(["time", "distance"])
+        self.isochrone_dist_combo.setFixedWidth(80)
+        self.iso_locations_layout.addWidget(self.isochrone_dist_combo, 0, 1)
+
+        location_label = QtWidgets.QLabel()
+        location_label.setText("Point de l'isochrone")
+        self.iso_locations_layout.addWidget(location_label, 1, 0)
+        self._add__iso_location_selector()
+
+        iso_value_label = QtWidgets.QLabel()
+        iso_value_label.setText("Valeur de temps ou distance")
+        self.iso_locations_layout.addWidget(iso_value_label, 3, 0)
+        self.iso_value = QtWidgets.QLineEdit()
+        self.iso_value.setValidator(QtGui.QIntValidator(1, 3600))
+        self.iso_value.setFixedWidth(80)
+        self.iso_value.textEdited.connect(self._check_send_iso_button_enabled)
+        self.iso_locations_layout.addWidget(self.iso_value, 3, 1)
+
+        parameters_layout = QtWidgets.QGridLayout()
+        parameters_layout.setSpacing(5)
+
+        central.addItem(QtWidgets.QSpacerItem(20, 20))
+        central.addLayout(parameters_layout)
+
+        parameter_label = QtWidgets.QLabel()
+        parameter_label.setText("Paramètres de l'isochrone")
+        parameter_label.setFixedHeight(30)
+        parameters_layout.addWidget(parameter_label, 0, 0)
+
+        profil_label = QtWidgets.QLabel()
+        profil_label.setText("Profil :")
+        parameters_layout.addWidget(profil_label, 1, 0)
+        self.iso_profile_combo = QtWidgets.QComboBox()
+        self.iso_profile_combo.addItems(["car", "pedestrian"])
+        parameters_layout.addWidget(self.iso_profile_combo, 1, 1)
+
+        sens_label = QtWidgets.QLabel()
+        sens_label.setText("Sens de parcours :")
+        parameters_layout.addWidget(sens_label, 1, 2)
+        self.sens_combo = QtWidgets.QComboBox()
+        self.sens_combo.addItems(["departure", "arrival"])
+        parameters_layout.addWidget(self.sens_combo, 1, 3)
+
+        timeunit_label = QtWidgets.QLabel()
+        timeunit_label.setText("Unité de temps :")
+        parameters_layout.addWidget(timeunit_label, 2, 0)
+        self.iso_timeunit_combo = QtWidgets.QComboBox()
+        self.iso_timeunit_combo.addItems(["second", "minute", "hour"])
+        parameters_layout.addWidget(self.iso_timeunit_combo, 2, 1)
+
+        distunit_label = QtWidgets.QLabel()
+        distunit_label.setText("Unité de distance :")
+        parameters_layout.addWidget(distunit_label, 2, 2)
+        self.iso_distunit_combo = QtWidgets.QComboBox()
+        self.iso_distunit_combo.addItems(["meter", "kilometer"])
+        parameters_layout.addWidget(self.iso_distunit_combo, 2, 3)
+
+        self.send_iso_button = QtWidgets.QPushButton(self)
+        self.send_iso_button.setText("Calculer l'isochrone")
+        self.send_iso_button.setMaximumWidth(200)
+        self.send_iso_button.clicked.connect(self.compute_iso)
+        self.send_iso_button.setEnabled(False)
+        self.isoLayout.addWidget(self.send_iso_button)
 
     def compute_route(self):
         """
@@ -156,6 +254,26 @@ class Road2QGISDialog(QtWidgets.QDialog):
         req = Road2Request(url, "bdtopo-osrm", start, end, **options)
         resp = req.doRequest()
         self._add_route_to_canvas(resp)
+
+    def compute_iso(self):
+        """
+        """
+        # url = "https://data.geopf.fr/navigation/isochrone"
+        # point = self.location_selector_iso.longitude, self.location_selector_iso.latitude
+
+        # options = {
+        #     "profile": self.iso_profile_combo.currentText(),
+        #     "costValue": self.iso_value.currentText(),
+        #     "costType": self.isochrone_dist_combo.currentText(),
+        #     "direction": self.sens_combo.currentText(),
+        #     "timeUnit": self.iso_timeunit_combo.currentText(),
+        #     "distanceUnit": self.iso_distunit_combo.currentText(),
+        # }
+
+        # req = Road2RequestIso(url, "bdtopo-valhalla", point, **options)
+        # resp = req.doRequest()
+        # self._add_iso_to_canvas(resp)
+        pass
 
     def _add_route_to_canvas(self, road2_response):
         """
@@ -268,6 +386,17 @@ class Road2QGISDialog(QtWidgets.QDialog):
         self.location_layout_end.setAlignment(QtCore.Qt.AlignLeft)
         self.location_selector_end.location_selected_signal.connect(self._check_send_button_enabled)
 
+    def _add__iso_location_selector(self):
+        """
+        """
+        # Start
+        self.location_layout_iso = QtWidgets.QHBoxLayout()
+        self.iso_locations_layout.addLayout(self.location_layout_iso, 2, 0)
+        self.location_layout_iso.setAlignment(QtCore.Qt.AlignLeft)
+        self.location_selector_iso = LocationSelector("", self.iface)
+        self.location_layout_iso.addWidget(self.location_selector_iso)
+        self.location_selector_iso.location_selected_signal.connect(self._check_send_iso_button_enabled)
+
     def _add_remove_intermediate_buttons(self):
         """
         """
@@ -293,3 +422,14 @@ class Road2QGISDialog(QtWidgets.QDialog):
                 self.send_route_button.setEnabled(False)
         else :
             self.send_route_button.setEnabled(False)
+
+    def _check_send_iso_button_enabled(self):
+        """
+        """
+        if self.iso_value.text() :
+            if self.location_selector_iso.latitude is not None and self.location_selector_iso.latitude is not None:
+                self.send_iso_button.setEnabled(True)
+            else :
+                self.send_iso_button.setEnabled(False)
+        else :
+                self.send_iso_button.setEnabled(False)
