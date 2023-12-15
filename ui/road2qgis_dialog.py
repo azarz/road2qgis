@@ -34,11 +34,13 @@ from qgis.core import (
 
 from road2qgis.ui.location_selector import LocationSelector
 from road2qgis.core.road2_request import Road2Request
+from road2qgis.toolbelt.preferences import PlgOptionsManager
 
 class Road2QGISDialog(QtWidgets.QDialog):
     def __init__(self, iface):
         """Constructor."""
         self.iface = iface
+        self.plg_settings = PlgOptionsManager()
         QtWidgets.QDialog.__init__(self)
         self.setWindowTitle("Calcul d'itinéraires du Géoportail")
 
@@ -135,7 +137,8 @@ class Road2QGISDialog(QtWidgets.QDialog):
     def compute_route(self):
         """
         """
-        url = "https://wxs.ign.fr/calcul/geoportail/itineraire/rest/1.0.0/route"
+        settings = self.plg_settings.get_plg_settings()
+        url = f"{settings.service_url}/navigation/itineraire"
         start = self.location_selector_start.longitude, self.location_selector_start.latitude
         end = self.location_selector_end.longitude, self.location_selector_end.latitude
 
@@ -153,7 +156,7 @@ class Road2QGISDialog(QtWidgets.QDialog):
             "getSteps": self.step_by_step_check.isChecked(),
         }
 
-        req = Road2Request(url, "bdtopo-osrm", start, end, **options)
+        req = Road2Request(url, settings.service_resource, start, end, **options)
         resp = req.doRequest()
         self._add_route_to_canvas(resp)
 

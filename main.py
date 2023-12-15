@@ -29,6 +29,7 @@ from qgis.PyQt.QtWidgets import QAction
 from road2qgis.resources import *
 # Import the code for the dialog
 from road2qgis.ui.road2qgis_dialog import Road2QGISDialog
+from road2qgis.ui.dlg_settings import PlgOptionsFactory
 import os.path
 
 
@@ -160,6 +161,10 @@ class Road2QGIS:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
+        # settings page within the QGIS preferences menu
+        self.options_factory = PlgOptionsFactory()
+        self.iface.registerOptionsWidgetFactory(self.options_factory)
+
         icon_path = ':/plugins/road2qgis/icon.png'
         self.add_action(
             icon_path,
@@ -173,6 +178,9 @@ class Road2QGIS:
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
+        # -- Clean up preferences panel in QGIS settings
+        self.iface.unregisterOptionsWidgetFactory(self.options_factory)
+
         for action in self.actions:
             self.iface.removePluginWebMenu(
                 self.tr(u'&road2QGIS'),
