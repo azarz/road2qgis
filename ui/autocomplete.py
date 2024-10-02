@@ -28,7 +28,7 @@ class SuggestionPlaceModel(QtGui.QStandardItemModel):
         loop.exec_()
 
     def create_request(self, text):
-        url = QtCore.QUrl("https://wxs.ign.fr/calcul/geoportail/geocodage/rest/0.1/completion")
+        url = QtCore.QUrl("https://data.geopf.fr/geocodage/completion")
         query = QtCore.QUrlQuery()
         query.addQueryItem("type", "StreetAddress,PositionOfInterest")
         query.addQueryItem("maximumResponses", "5")

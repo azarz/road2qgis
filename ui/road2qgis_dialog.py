@@ -135,7 +135,7 @@ class Road2QGISDialog(QtWidgets.QDialog):
     def compute_route(self):
         """
         """
-        url = "https://wxs.ign.fr/calcul/geoportail/itineraire/rest/1.0.0/route"
+        url = "https://data.geopf.fr/navigation/itineraire"
         start = self.location_selector_start.longitude, self.location_selector_start.latitude
         end = self.location_selector_end.longitude, self.location_selector_end.latitude
 

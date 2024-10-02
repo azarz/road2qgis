@@ -87,7 +87,7 @@ class Road2Request:
         return Road2Response(req.json())
 
 if __name__ == "__main__":
-    url = "https://wxs.ign.fr/calcul/geoportail/itineraire/rest/1.0.0/route"
+    url = "https://data.geopf.fr/navigation/itineraire"
     start = 2.337306, 48.849319
     end = 2.367776, 48.852891
     req = Road2Request(url, "bdtopo-osrm", start, end)
