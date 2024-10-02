@@ -1,11 +1,11 @@
 #/***************************************************************************
 # Road2QGIS
 #
-# Plugin faisant appel au calcul d'itinéraires du Géoportail pour intégration dans QGIS
+# Plugin faisant appel au calcul d'itinéraires de la Géoplateforme pour intégration dans QGIS
 #							 -------------------
 #		begin				: 2022-11-07
 #		git sha				: $Format:%H$
-#		copyright			: (C) 2022 by azarz
+#		copyright			: (C) 2024 by azarz
 #		email				: amaury.zarzelli@gmail.com
 # ***************************************************************************/
 #
@@ -84,7 +84,7 @@ default:
 	@echo A Python script, pb_tool provides platform independent management of
 	@echo your plugins and runs anywhere.
 	@echo You can install pb_tool using: pip install pb_tool
-	@echo See https://g-sherman.github.io/plugin_build_tool/ for info. 
+	@echo See https://g-sherman.github.io/plugin_build_tool/ for info.
 
 compile: $(COMPILED_RESOURCE_FILES)
 
