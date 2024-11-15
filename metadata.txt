@@ -6,7 +6,7 @@
 name=road2QGIS
 qgisMinimumVersion=3.0
 description=Plugin faisant appel au calcul d'itinéraires de la Géoplateforme pour intégration dans QGIS
-version=0.2
+version=0.3
 author=azarz
 email=amaury.zarzelli@gmail.com
 
