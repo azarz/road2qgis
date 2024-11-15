@@ -34,7 +34,7 @@ from qgis.core import (
 
 from road2qgis.ui.location_selector import LocationSelector
 from road2qgis.core.road2_request import Road2Request
-# from road2qgis.core.road2_request_iso import Road2RequestIso
+from road2qgis.core.road2_request_iso import Road2RequestIso
 
 class Road2QGISDialog(QtWidgets.QDialog):
     def __init__(self, iface):
@@ -258,27 +258,25 @@ class Road2QGISDialog(QtWidgets.QDialog):
     def compute_iso(self):
         """
         """
-        # url = "https://data.geopf.fr/navigation/isochrone"
-        # point = self.location_selector_iso.longitude, self.location_selector_iso.latitude
+        url = "https://data.geopf.fr/navigation/isochrone"
+        point = self.location_selector_iso.longitude, self.location_selector_iso.latitude
+        costValue = self.iso_value.text()
+        costType = self.isochrone_dist_combo.currentText()
 
-        # options = {
-        #     "profile": self.iso_profile_combo.currentText(),
-        #     "costValue": self.iso_value.currentText(),
-        #     "costType": self.isochrone_dist_combo.currentText(),
-        #     "direction": self.sens_combo.currentText(),
-        #     "timeUnit": self.iso_timeunit_combo.currentText(),
-        #     "distanceUnit": self.iso_distunit_combo.currentText(),
-        # }
+        options = {
+            "profile": self.iso_profile_combo.currentText(),
+            "direction": self.sens_combo.currentText(),
+            "timeUnit": self.iso_timeunit_combo.currentText(),
+            "distanceUnit": self.iso_distunit_combo.currentText(),
+        }
 
-        # req = Road2RequestIso(url, "bdtopo-valhalla", point, **options)
-        # resp = req.doRequest()
-        # self._add_iso_to_canvas(resp)
-        pass
+        req = Road2RequestIso(url, "bdtopo-valhalla", point, costValue, costType, **options)
+        resp = req.doRequest()
+        self._add_iso_to_canvas(resp)
 
     def _add_route_to_canvas(self, road2_response):
         """
         """
-        timestamp = time.time()
         if self.step_by_step_check.isChecked():
             portions_features = road2_response.getFeatureCollections()
             for i in range(len(portions_features)):
@@ -330,6 +328,36 @@ class Road2QGISDialog(QtWidgets.QDialog):
         point_max.transform(tr)
         canvas = self.iface.mapCanvas()
         canvas.setExtent(QgsRectangle(QgsPointXY(point_min), QgsPointXY(point_max)))
+
+    def _add_iso_to_canvas(self, road2_response_iso):
+        """
+        """
+        feature_string = json.dumps(road2_response_iso.getFeature())
+        codec = QtCore.QTextCodec.codecForName("UTF-8")
+        fields = QgsJsonUtils.stringToFields(feature_string, codec)
+        feats = QgsJsonUtils.stringToFeatureList(feature_string, fields, codec)
+
+        layer = QgsVectorLayer("Polygon", "isochrone", "memory")
+        provider = layer.dataProvider()
+        provider.addAttributes(fields)
+        layer.updateFields()
+        provider.addFeatures(feats)
+        layer.updateExtents()
+
+        QgsProject.instance().addMapLayer(layer)
+        layer.renderer().symbol().setOpacity(0.6)
+        layer.triggerRepaint()
+
+        iso_crs = QgsCoordinateReferenceSystem.fromEpsgId(4326)
+        project_crs = self.iface.mapCanvas().mapSettings().destinationCrs()
+        tr = QgsCoordinateTransform(iso_crs, project_crs, QgsProject.instance())
+
+        canvas = self.iface.mapCanvas()
+        for feature in layer.getFeatures():
+            geometry = feature.geometry()
+            geometry.transform(tr)
+            canvas.setExtent(geometry.boundingBox())
+            break
 
     def _display_intermediate_location_selector(self):
         """
